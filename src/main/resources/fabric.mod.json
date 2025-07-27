@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "serverguis",
+  "version": "${version}",
+  "name": "ServerGuis",
+  "description": "",
+  "authors": [ "557" ],
+  "contact": {},
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "icu.suc.serverguis.ServerGuis"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}",
+    "serverevents": "*"
+  }
+}
