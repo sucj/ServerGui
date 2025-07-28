@@ -10,7 +10,7 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "icu.suc.serverguis.ServerGuis"
+      "icu.suc.servergui.ServerGui"
     ]
   },
   "accessWidener": "servergui.accesswidener",

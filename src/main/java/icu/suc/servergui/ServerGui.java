@@ -1,4 +1,4 @@
-package icu.suc.serverguis;
+package icu.suc.servergui;
 
 import icu.suc.serverevents.ServerEvents;
 import net.fabricmc.api.ModInitializer;
@@ -8,7 +8,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.inventory.MenuType;
 import org.jetbrains.annotations.NotNull;
 
-public class ServerGuis implements ModInitializer {
+public class ServerGui implements ModInitializer {
 
     private static int nextContainerCounter(@NotNull ServerPlayer player) {
         player.nextContainerCounter();
