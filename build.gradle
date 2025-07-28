@@ -14,10 +14,12 @@ loom {
     splitEnvironmentSourceSets()
 
     mods {
-        "serverguis" {
+        "servergui" {
             sourceSet sourceSets.main
         }
     }
+
+    accessWidenerPath.set(file("src/main/resources/servergui.accesswidener"))
 }
 
 
@@ -35,6 +37,8 @@ dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
     modApi "icu.suc:serverevents:2025.7.3"
 }

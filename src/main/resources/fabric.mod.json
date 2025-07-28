@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "id": "serverguis",
+  "id": "servergui",
   "version": "${version}",
-  "name": "ServerGuis",
+  "name": "Server Gui",
   "description": "",
   "authors": [ "557" ],
   "contact": {},
@@ -13,6 +13,7 @@
       "icu.suc.serverguis.ServerGuis"
     ]
   },
+  "accessWidener": "servergui.accesswidener",
   "depends": {
     "fabricloader": ">=${loader_version}",
     "fabric": "*",
