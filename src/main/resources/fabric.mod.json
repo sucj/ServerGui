@@ -5,18 +5,16 @@
   "name": "Server Gui",
   "description": "",
   "authors": [ "557" ],
-  "contact": {},
+  "contact": {
+    "homepage": "https://modrinth.com/mod/servergui",
+    "sources": "https://github.com/sucj/ServerGui",
+    "issues": "https://github.com/sucj/ServerGui/issues"
+  },
   "license": "MIT",
   "environment": "*",
-  "entrypoints": {
-    "main": [
-      "icu.suc.servergui.ServerGui"
-    ]
-  },
   "accessWidener": "servergui.accesswidener",
   "depends": {
     "fabricloader": ">=${loader_version}",
-    "fabric": "*",
     "minecraft": "${minecraft_version}",
     "serverevents": "*"
   }
