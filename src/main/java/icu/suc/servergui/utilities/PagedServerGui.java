@@ -119,6 +119,24 @@ public class PagedServerGui<E> {
         return this;
     }
 
+    public PagedServerGui<E> setPrev(@NotNull FunctionItem prev) {
+        for (int i = 0; i < pages.length; i++) {
+            if (i != 0) {
+                pages[i].setItem(PREV, player -> prev.apply(player, getCurrent(player), getMax()));
+            }
+        }
+        return this;
+    }
+
+    public PagedServerGui<E> setNext(@NotNull FunctionItem next) {
+        for (int i = 0; i < pages.length; i++) {
+            if (i != pages.length - 1) {
+                pages[i].setItem(PREV, player -> next.apply(player, getCurrent(player), getMax()));
+            }
+        }
+        return this;
+    }
+
     public PagedServerGui<E> setEntry(@NotNull FunctionEntry<E> entry) {
         for (int i = 0; i < pages.length; i++) {
             for (int j = 0; j < SLOTS.length; j++) {
