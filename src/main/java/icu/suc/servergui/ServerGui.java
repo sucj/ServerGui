@@ -130,14 +130,12 @@ public class ServerGui {
                     var result = click.apply(player, items.get(slot), context, slot, type, button);
                     items.set(slot, result);
 
-//                    if (Objects.equals(type, ClickType.SHIFT_LEFT) || Objects.equals(type, ClickType.SHIFT_RIGHT)|| Objects.equals(type, ClickType.SWAP)) {
-//                        containerClickPacket.changedSlots().keySet().intStream().dropWhile(i -> i == slot).forEach(i -> player.connection.send(new ClientboundSetPlayerInventoryPacket(i, player.getInventory().getItem(i))));
-//                    }
-                    List<ItemStack> content = Lists.newArrayList();
-                    content.addAll(items);
-                    content.addAll(player.getInventory().getNonEquipmentItems());
-                    Inventory.EQUIPMENT_SLOT_MAPPING.keySet().forEach(integer -> content.add(player.getInventory().getItem(integer)));
-                    player.connection.send(new ClientboundContainerSetContentPacket(container, 0, content, context.cursor()));
+                    for (int i : containerClickPacket.changedSlots().keySet()) {
+                        if (i >= context.type().size()) {
+                            player.connection.send(new ClientboundSetPlayerInventoryPacket(i, player.getInventory().getItem(i)));
+                        }
+                    }
+                    player.connection.send(new ClientboundContainerSetContentPacket(container, 0, items, context.cursor()));
                 }
             }
             return true;
