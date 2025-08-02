@@ -8,7 +8,9 @@ import net.minecraft.network.protocol.game.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -114,20 +116,31 @@ public class ServerGui {
                         return true;
                     }
 
-                    int size = context.type().size();
-                    for (int i : containerClickPacket.changedSlots().keySet()) {
-                        if (i >= size) {
-                            i -= size;
-                            player.connection.send(new ClientboundSetPlayerInventoryPacket(i, player.getInventory().getItem(i)));
-                        }
-                    }
+                    player.connection.send(new ClientboundSetPlayerInventoryPacket(36, Items.APPLE.getDefaultInstance()));
 
+                    int size = context.type().size();
                     int slot = containerClickPacket.slotNum();
                     byte button = containerClickPacket.buttonNum();
                     var type = ClickType.of(containerClickPacket.clickType(), button);
                     var items = context.items();
 
-                    if (Objects.nonNull(type)) {
+                    if (Objects.equals(type, ClickType.SWAP) && Inventory.EQUIPMENT_SLOT_MAPPING.keySet().contains(button)) {
+                        player.connection.send(new ClientboundSetPlayerInventoryPacket(button, player.getInventory().getItem(button)));
+                    } else {
+                        for (int i : containerClickPacket.changedSlots().keySet()) {
+                            if (i >= size) {
+                                i -= size;
+                                if (i < Inventory.INVENTORY_SIZE - Inventory.SELECTION_SIZE) {
+                                    i += Inventory.SELECTION_SIZE;
+                                } else {
+                                    i -= Inventory.INVENTORY_SIZE - Inventory.SELECTION_SIZE;
+                                }
+                                player.connection.send(new ClientboundSetPlayerInventoryPacket(i, player.getInventory().getItem(i)));
+                            }
+                        }
+                    }
+
+                    if (Objects.nonNull(type) && slot < size) {
                         var click = context.clicks().getOrDefault(slot, context.click());
                         var result = click.apply(player, items.get(slot), context, slot, type, button);
                         items.set(slot, result);
