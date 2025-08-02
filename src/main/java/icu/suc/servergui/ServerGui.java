@@ -1,6 +1,5 @@
 package icu.suc.servergui;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import icu.suc.serverevents.ServerEvents;
 import net.minecraft.core.NonNullList;
@@ -9,7 +8,6 @@ import net.minecraft.network.protocol.game.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -112,29 +110,29 @@ public class ServerGui {
                 int container = context.container();
 
                 if (packet instanceof ServerboundContainerClickPacket containerClickPacket) {
-                    if (!Objects.equals(container, containerClickPacket.containerId()) || containerClickPacket.slotNum() >= context.type().size()) {
+                    if (!Objects.equals(container, containerClickPacket.containerId())) {
                         return true;
                     }
 
-                    byte button = containerClickPacket.buttonNum();
-                    var type = ClickType.of(containerClickPacket.clickType(), button);
-
-                    if (Objects.isNull(type)) {
-                        return true;
-                    }
-
-                    int slot = containerClickPacket.slotNum();
-                    var click = context.clicks().getOrDefault(slot, context.click());
-
-                    var items = context.items();
-                    var result = click.apply(player, items.get(slot), context, slot, type, button);
-                    items.set(slot, result);
-
+                    int size = context.type().size();
                     for (int i : containerClickPacket.changedSlots().keySet()) {
-                        if (i >= context.type().size()) {
+                        if (i >= size) {
+                            i -= size;
                             player.connection.send(new ClientboundSetPlayerInventoryPacket(i, player.getInventory().getItem(i)));
                         }
                     }
+
+                    int slot = containerClickPacket.slotNum();
+                    byte button = containerClickPacket.buttonNum();
+                    var type = ClickType.of(containerClickPacket.clickType(), button);
+                    var items = context.items();
+
+                    if (Objects.nonNull(type)) {
+                        var click = context.clicks().getOrDefault(slot, context.click());
+                        var result = click.apply(player, items.get(slot), context, slot, type, button);
+                        items.set(slot, result);
+                    }
+
                     player.connection.send(new ClientboundContainerSetContentPacket(container, 0, items, context.cursor()));
                 }
             }
