@@ -131,7 +131,7 @@ public class PagedServerGui<E> {
     public PagedServerGui<E> setNext(@NotNull FunctionItem next) {
         for (int i = 0; i < pages.length; i++) {
             if (i != pages.length - 1) {
-                pages[i].setItem(PREV, player -> next.apply(player, getCurrent(player), getMax()));
+                pages[i].setItem(NEXT, player -> next.apply(player, getCurrent(player), getMax()));
             }
         }
         return this;
