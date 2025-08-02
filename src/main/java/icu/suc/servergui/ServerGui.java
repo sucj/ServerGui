@@ -9,12 +9,11 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.item.ItemStack;
+import org.apache.commons.compress.utils.Lists;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
 
 public class ServerGui {
@@ -130,7 +129,14 @@ public class ServerGui {
                     var result = click.apply(player, items.get(slot), context, slot, type, button);
                     items.set(slot, result);
 
-                    player.connection.send(new ClientboundContainerSetContentPacket(container, 0, items, context.cursor()));
+                    if (Objects.equals(type, ClickType.SWAP)) {
+                        List<ItemStack> content = Lists.newArrayList();
+                        content.addAll(items);
+                        content.addAll(player.getInventory().getNonEquipmentItems());
+                        player.connection.send(new ClientboundContainerSetContentPacket(container, 0, content, context.cursor()));
+                    } else {
+                        player.connection.send(new ClientboundContainerSetContentPacket(container, 0, items, context.cursor()));
+                    }
                 }
             }
             return true;
