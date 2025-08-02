@@ -9,6 +9,7 @@ import net.minecraft.network.protocol.game.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -129,14 +130,14 @@ public class ServerGui {
                     var result = click.apply(player, items.get(slot), context, slot, type, button);
                     items.set(slot, result);
 
-                    if (Objects.equals(type, ClickType.SHIFT_LEFT) || Objects.equals(type, ClickType.SHIFT_RIGHT)|| Objects.equals(type, ClickType.SWAP)) {
-                        List<ItemStack> content = Lists.newArrayList();
-                        content.addAll(items);
-                        content.addAll(player.getInventory().getNonEquipmentItems());
-                        player.connection.send(new ClientboundContainerSetContentPacket(container, 0, content, context.cursor()));
-                    } else {
-                        player.connection.send(new ClientboundContainerSetContentPacket(container, 0, items, context.cursor()));
-                    }
+//                    if (Objects.equals(type, ClickType.SHIFT_LEFT) || Objects.equals(type, ClickType.SHIFT_RIGHT)|| Objects.equals(type, ClickType.SWAP)) {
+//                        containerClickPacket.changedSlots().keySet().intStream().dropWhile(i -> i == slot).forEach(i -> player.connection.send(new ClientboundSetPlayerInventoryPacket(i, player.getInventory().getItem(i))));
+//                    }
+                    List<ItemStack> content = Lists.newArrayList();
+                    content.addAll(items);
+                    content.addAll(player.getInventory().getNonEquipmentItems());
+                    Inventory.EQUIPMENT_SLOT_MAPPING.keySet().forEach(integer -> content.add(player.getInventory().getItem(integer)));
+                    player.connection.send(new ClientboundContainerSetContentPacket(container, 0, content, context.cursor()));
                 }
             }
             return true;
