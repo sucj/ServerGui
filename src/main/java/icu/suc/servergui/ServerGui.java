@@ -21,7 +21,7 @@ public class ServerGui {
     public static final Function<@NotNull ServerPlayer, @NotNull Component> DEFAULT_TITLE = player -> Component.empty();
     public static final Function<@NotNull ServerPlayer, @NotNull ItemStack> DEFAULT_CURSOR = player -> ItemStack.EMPTY;
     public static final Function<@NotNull ServerPlayer, @NotNull ItemStack> DEFAULT_ITEM = player -> ItemStack.EMPTY;
-    public static final FunctionSlot DEFAULT_SLOT = (player, item, context, slot, type1, button) -> item;
+    public static final FunctionClick DEFAULT_CLICK = (player, item, context, slot, type1, button) -> item;
 
     private static final Map<UUID, GuiContext> CONTEXTS = Maps.newConcurrentMap();
 
@@ -30,10 +30,10 @@ public class ServerGui {
     private Function<@NotNull ServerPlayer, @NotNull ItemStack> cursor = DEFAULT_CURSOR;
     private Function<@NotNull ServerPlayer, @NotNull ItemStack> item = DEFAULT_ITEM;
     private final Map<Integer, Function<@NotNull ServerPlayer, @NotNull ItemStack>> items = Maps.newHashMap();
-    private FunctionSlot slot = DEFAULT_SLOT;
-    private final Map<Integer, FunctionSlot> slots = Maps.newHashMap();
+    private FunctionClick click = DEFAULT_CLICK;
+    private final Map<Integer, FunctionClick> clicks = Maps.newHashMap();
 
-    private ServerGui(@NotNull Function<ServerPlayer, GuiType> type) {
+    protected ServerGui(@NotNull Function<ServerPlayer, GuiType> type) {
         this.type = type;
     }
 
@@ -47,7 +47,7 @@ public class ServerGui {
         var items = NonNullList.withSize(type.size(), item);
         this.items.forEach((slot, function) -> items.set(slot, function.apply(player)));
 
-        CONTEXTS.put(player.getUUID(), new GuiContext(container, type, title, cursor, item, items, slot, slots));
+        CONTEXTS.put(player.getUUID(), new GuiContext(container, type, title, cursor, item, items, click, clicks));
 
         player.connection.send(new ClientboundOpenScreenPacket(container, type.menu(), title));
         player.connection.send(new ClientboundContainerSetContentPacket(container, 0, items, cursor));
@@ -80,18 +80,18 @@ public class ServerGui {
         return this;
     }
 
-    public ServerGui setItem(int slot, @NotNull Function<@NotNull ServerPlayer, @NotNull ItemStack> function) {
-        this.items.put(slot, function);
+    public ServerGui setItem(int slot, @NotNull Function<@NotNull ServerPlayer, @NotNull ItemStack> item) {
+        this.items.put(slot, item);
         return this;
     }
 
-    public ServerGui onClick(@NotNull FunctionSlot slot) {
-        this.slot = slot;
+    public ServerGui onClick(@NotNull FunctionClick click) {
+        this.click = click;
         return this;
     }
 
-    public ServerGui onClick(int slot, @NotNull FunctionSlot function) {
-        this.slots.put(slot, function);
+    public ServerGui onClick(int slot, @NotNull FunctionClick click) {
+        this.clicks.put(slot, click);
         return this;
     }
 
@@ -124,10 +124,10 @@ public class ServerGui {
                     }
 
                     int slot = containerClickPacket.slotNum();
-                    var onClick = context.slots().getOrDefault(slot, context.slot());
+                    var click = context.clicks().getOrDefault(slot, context.click());
 
                     var items = context.items();
-                    var result = onClick.apply(player, items.get(slot), context, slot, type, button);
+                    var result = click.apply(player, items.get(slot), context, slot, type, button);
                     items.set(slot, result);
 
                     player.connection.send(new ClientboundContainerSetContentPacket(container, 0, items, context.cursor()));

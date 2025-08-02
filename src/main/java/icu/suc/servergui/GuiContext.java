@@ -7,5 +7,5 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-public record GuiContext(int container, @NotNull GuiType type, @NotNull Component title, @NotNull ItemStack cursor, @NotNull ItemStack item, @NotNull NonNullList<ItemStack> items, @NotNull FunctionSlot slot, @NotNull Map<Integer, FunctionSlot> slots) {
+public record GuiContext(int container, @NotNull GuiType type, @NotNull Component title, @NotNull ItemStack cursor, @NotNull ItemStack item, @NotNull NonNullList<ItemStack> items, @NotNull FunctionClick click, @NotNull Map<Integer, FunctionClick> clicks) {
 }
