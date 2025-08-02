@@ -1,5 +1,6 @@
 package icu.suc.servergui;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import icu.suc.serverevents.ServerEvents;
 import net.minecraft.core.NonNullList;
@@ -9,7 +10,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.item.ItemStack;
-import org.apache.commons.compress.utils.Lists;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -129,7 +129,7 @@ public class ServerGui {
                     var result = click.apply(player, items.get(slot), context, slot, type, button);
                     items.set(slot, result);
 
-                    if (Objects.equals(type, ClickType.SHIFT_LEFT) || Objects.equals(type, ClickType.SHIFT_RIGHT)) {
+                    if (Objects.equals(type, ClickType.SHIFT_LEFT) || Objects.equals(type, ClickType.SHIFT_RIGHT)|| Objects.equals(type, ClickType.SWAP)) {
                         List<ItemStack> content = Lists.newArrayList();
                         content.addAll(items);
                         content.addAll(player.getInventory().getNonEquipmentItems());
