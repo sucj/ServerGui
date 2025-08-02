@@ -129,7 +129,7 @@ public class ServerGui {
                     var result = click.apply(player, items.get(slot), context, slot, type, button);
                     items.set(slot, result);
 
-                    if (Objects.equals(type, ClickType.SWAP)) {
+                    if (Objects.equals(type, ClickType.SHIFT_LEFT) || Objects.equals(type, ClickType.SHIFT_RIGHT)) {
                         List<ItemStack> content = Lists.newArrayList();
                         content.addAll(items);
                         content.addAll(player.getInventory().getNonEquipmentItems());
