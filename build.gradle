@@ -6,7 +6,7 @@ plugins {
     alias libs.plugins.kotlin
 }
 
-version = "2025.8.11"
+version = "2025.8.12"
 group = "icu.suc"
 
 base {
@@ -51,10 +51,10 @@ processResources {
 
     filesMatching("fabric.mod.json") {
         expand "version": project.version,
-                "minecraft": libs.versions.minecraft,
-                "loader": libs.versions.fabric.loader,
-                "kotlin": libs.versions.fabric.kotlin,
-                "serverevents": libs.versions.serverevents
+                "minecraft": libs.versions.minecraft.get(),
+                "loader": libs.versions.fabric.loader.get(),
+                "kotlin": libs.versions.fabric.kotlin.get(),
+                "serverevents": libs.versions.serverevents.get()
     }
 }
 
