@@ -1,13 +1,16 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
-    id 'fabric-loom' version '1.11.4'
-    id 'maven-publish'
+    alias libs.plugins.fabric.loom
+    alias libs.plugins.maven
+    alias libs.plugins.kotlin
 }
 
-version = project.mod_version
-group = project.maven_group
+version = "2025.8.11"
+group = "icu.suc"
 
 base {
-    archivesName = project.archives_base_name
+    archivesName = "servergui"
 }
 
 loom {
@@ -30,29 +33,28 @@ repositories {
     // See https://docs.gradle.org/current/userguide/declaring_repositories.html
     // for more information about repositories.
     maven { url "https://jitpack.io" }
+    mavenCentral()
 }
 
 dependencies {
     // To change the versions see the gradle.properties file
-    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    minecraft libs.minecraft
     mappings loom.officialMojangMappings()
-    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-
-    modApi "icu.suc:serverevents:2025.7.3"
+    modImplementation libs.fabric.loader
+    modImplementation libs.fabric.api
+    modImplementation libs.fabric.kotlin
+    modImplementation libs.serverevents
 }
 
 processResources {
-    inputs.property "version", project.version
-    inputs.property "minecraft_version", project.minecraft_version
-    inputs.property "loader_version", project.loader_version
     filteringCharset "UTF-8"
 
     filesMatching("fabric.mod.json") {
         expand "version": project.version,
-                "minecraft_version": project.minecraft_version,
-                "loader_version": project.loader_version
+                "minecraft": libs.versions.minecraft,
+                "loader": libs.versions.fabric.loader,
+                "kotlin": libs.versions.fabric.kotlin,
+                "serverevents": libs.versions.serverevents
     }
 }
 
@@ -65,6 +67,12 @@ tasks.withType(JavaCompile).configureEach {
     it.options.encoding = "UTF-8"
     if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
         it.options.release.set(targetJavaVersion)
+    }
+}
+
+tasks.withType(KotlinCompile).configureEach {
+    kotlinOptions {
+        jvmTarget = "21"
     }
 }
 
@@ -81,7 +89,7 @@ java {
 
 jar {
     from("LICENSE") {
-        rename { "${it}_${project.archivesBaseName}" }
+        rename { "${it}_servergui" }
     }
 }
 
@@ -89,7 +97,7 @@ jar {
 publishing {
     publications {
         create("mavenJava", MavenPublication) {
-            artifactId = project.archives_base_name
+            artifactId = "servergui"
             from components.java
         }
     }

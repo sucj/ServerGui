@@ -14,8 +14,9 @@
   "environment": "*",
   "accessWidener": "servergui.accesswidener",
   "depends": {
-    "fabricloader": ">=${loader_version}",
-    "minecraft": "${minecraft_version}",
-    "serverevents": "*"
+    "fabricloader": ">=${loader}",
+    "minecraft": "${minecraft}",
+    "fabric-language-kotlin": ">=${kotlin}",
+    "serverevents": ">=${serverevents}"
   }
 }
