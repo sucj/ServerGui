@@ -98,14 +98,14 @@ open class ServerGui(private var type: (player: ServerPlayer) -> GuiType) {
     }
 
     companion object {
-        @JvmStatic val PHASE: ResourceLocation = ResourceLocation.fromNamespaceAndPath("servergui", "listener")
+        @JvmField val PHASE: ResourceLocation = ResourceLocation.fromNamespaceAndPath("servergui", "listener")
 
-        @JvmStatic val DEFAULT_TITLE: (player: ServerPlayer) -> Component = { Component.empty() }
-        @JvmStatic val DEFAULT_CURSOR: (player: ServerPlayer) -> ItemStack = { ItemStack.EMPTY }
-        @JvmStatic val DEFAULT_ITEM: (player: ServerPlayer) -> ItemStack = { ItemStack.EMPTY }
-        @JvmStatic val DEFAULT_CLICK: (player: ServerPlayer, context: Context, result: ItemStack, slot: Int, type: ClickType, button: Int) -> ItemStack = { player, context, item, slot, type, button -> item }
-        @JvmStatic val DEFAULT_OPEN: (player: ServerPlayer, context: Context) -> Unit = { _, _ -> }
-        @JvmStatic val DEFAULT_CLOSE: (player: ServerPlayer, context: Context) -> Unit = { _, _ -> }
+        @JvmField val DEFAULT_TITLE: (player: ServerPlayer) -> Component = { Component.empty() }
+        @JvmField val DEFAULT_CURSOR: (player: ServerPlayer) -> ItemStack = { ItemStack.EMPTY }
+        @JvmField val DEFAULT_ITEM: (player: ServerPlayer) -> ItemStack = { ItemStack.EMPTY }
+        @JvmField val DEFAULT_CLICK: (player: ServerPlayer, context: Context, result: ItemStack, slot: Int, type: ClickType, button: Int) -> ItemStack = { player, context, item, slot, type, button -> item }
+        @JvmField val DEFAULT_OPEN: (player: ServerPlayer, context: Context) -> Unit = { _, _ -> }
+        @JvmField val DEFAULT_CLOSE: (player: ServerPlayer, context: Context) -> Unit = { _, _ -> }
 
         private val CONTEXTS: MutableMap<UUID, Context> = ConcurrentHashMap()
 

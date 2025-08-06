@@ -7,7 +7,7 @@ plugins {
     alias libs.plugins.kotlin
 }
 
-version = "2025.8.13"
+version = "2025.8.14"
 group = "icu.suc"
 
 base {
