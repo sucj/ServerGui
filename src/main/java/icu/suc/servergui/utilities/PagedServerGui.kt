@@ -20,13 +20,13 @@ open class PagedServerGui<E>(private val content: Array<E>) {
                 page.setItem(slot) { ItemStack.EMPTY }
             }
             if (i != 0) {
-                page.onClick(PREV) { player, context, result, slot, type, button ->
+                page.onClick(PREV) { player, _, result, _, _, _ ->
                     prev(player)
                     result
                 }
             }
             if (i != pages.size - 1) {
-                page.onClick(NEXT) { player, context, result, slot, type, button ->
+                page.onClick(NEXT) { player, _, result, _, _, _ ->
                     next(player)
                     result
                 }
@@ -40,11 +40,8 @@ open class PagedServerGui<E>(private val content: Array<E>) {
         if (page < 0 || page >= pages.size) {
             return
         }
-        val gui = pages[page]
-        if (gui == null) {
-            return
-        }
-        current.put(player.uuid, page)
+        val gui = pages[page] ?: return
+        current[player.uuid] = page
         gui.open(player)
     }
 

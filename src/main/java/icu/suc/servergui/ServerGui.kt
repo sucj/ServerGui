@@ -27,7 +27,7 @@ open class ServerGui(private var type: (player: ServerPlayer) -> GuiType) {
     private var click: (player: ServerPlayer, context: Context, result: ItemStack, slot: Int, type: ClickType, button: Int) -> ItemStack = DEFAULT_CLICK
     private val clicks = HashMap<Int, (player: ServerPlayer, context: Context, result: ItemStack, slot: Int, type: ClickType, button: Int) -> ItemStack>()
     private var open: (player: ServerPlayer, context: Context) -> Unit = DEFAULT_OPEN
-    private var close: (player: ServerPlayer, context: Context) -> Unit = DEFAULT_OPEN
+    private var close: (player: ServerPlayer, context: Context) -> Unit = DEFAULT_CLOSE
 
     fun open(player: ServerPlayer): Int {
         val container: Int = nextContainerCounter(player)
@@ -73,7 +73,7 @@ open class ServerGui(private var type: (player: ServerPlayer) -> GuiType) {
     }
 
     fun setItem(slot: Int, item: (ServerPlayer) -> ItemStack): ServerGui {
-        this.items.put(slot, item)
+        this.items[slot] = item
         return this
     }
 
@@ -83,7 +83,7 @@ open class ServerGui(private var type: (player: ServerPlayer) -> GuiType) {
     }
 
     fun onClick(slot: Int, click: (player: ServerPlayer, context: Context, result: ItemStack, slot: Int, type: ClickType, button: Int) -> ItemStack): ServerGui {
-        this.clicks.put(slot, click)
+        this.clicks[slot] = click
         return this
     }
 
@@ -98,12 +98,14 @@ open class ServerGui(private var type: (player: ServerPlayer) -> GuiType) {
     }
 
     companion object {
-        val DEFAULT_TITLE: (player: ServerPlayer) -> Component = { Component.empty() }
-        val DEFAULT_CURSOR: (player: ServerPlayer) -> ItemStack = { ItemStack.EMPTY }
-        val DEFAULT_ITEM: (player: ServerPlayer) -> ItemStack = { ItemStack.EMPTY }
-        val DEFAULT_CLICK: (player: ServerPlayer, context: Context, result: ItemStack, slot: Int, type: ClickType, button: Int) -> ItemStack = { player, context, item, slot, type, button -> item }
-        val DEFAULT_OPEN: (player: ServerPlayer, context: Context) -> Unit = { player, context -> }
-        val DEFAULT_CLOSE: (player: ServerPlayer, context: Context) -> Unit = { player, context -> }
+        @JvmStatic val PHASE: ResourceLocation = ResourceLocation.fromNamespaceAndPath("servergui", "listener")
+
+        @JvmStatic val DEFAULT_TITLE: (player: ServerPlayer) -> Component = { Component.empty() }
+        @JvmStatic val DEFAULT_CURSOR: (player: ServerPlayer) -> ItemStack = { ItemStack.EMPTY }
+        @JvmStatic val DEFAULT_ITEM: (player: ServerPlayer) -> ItemStack = { ItemStack.EMPTY }
+        @JvmStatic val DEFAULT_CLICK: (player: ServerPlayer, context: Context, result: ItemStack, slot: Int, type: ClickType, button: Int) -> ItemStack = { player, context, item, slot, type, button -> item }
+        @JvmStatic val DEFAULT_OPEN: (player: ServerPlayer, context: Context) -> Unit = { _, _ -> }
+        @JvmStatic val DEFAULT_CLOSE: (player: ServerPlayer, context: Context) -> Unit = { _, _ -> }
 
         private val CONTEXTS: MutableMap<UUID, Context> = ConcurrentHashMap()
 
@@ -122,14 +124,11 @@ open class ServerGui(private var type: (player: ServerPlayer) -> GuiType) {
 
         init {
             Receive.ALLOW.register(
-                ResourceLocation.tryBuild("servergui", "listener"),
+                PHASE,
                 Receive.Allow { listener: PacketListener?, packet: Packet<*>? ->
                     if (listener is ServerGamePacketListenerImpl) {
                         val player = listener.player
-                        val context: Context? = CONTEXTS[player.uuid]
-                        if (context == null) {
-                            return@Allow true
-                        }
+                        val context: Context = CONTEXTS[player.uuid] ?: return@Allow true
 
                         val container = context.container
 
