@@ -7,7 +7,7 @@ plugins {
     alias libs.plugins.kotlin
 }
 
-version = "2025.8.14"
+version = "2025.8.15"
 group = "icu.suc"
 
 base {
@@ -41,10 +41,10 @@ dependencies {
     // To change the versions see the gradle.properties file
     minecraft libs.minecraft
     mappings loom.officialMojangMappings()
-    modImplementation libs.fabric.loader
-    modImplementation libs.fabric.api
-    modImplementation libs.fabric.kotlin
-    modImplementation libs.serverevents
+    modImplementation libs.fabric.loader.get()
+    modImplementation libs.fabric.api.get()
+    modImplementation libs.fabric.kotlin.get()
+    modImplementation libs.serverevents.get()
 }
 
 processResources {
