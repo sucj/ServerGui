@@ -3,7 +3,7 @@
   "id": "servergui",
   "version": "${version}",
   "name": "Server Gui",
-  "description": "",
+  "description": "Packet-level GUI library.",
   "authors": [ "557" ],
   "contact": {
     "homepage": "https://modrinth.com/mod/servergui",

@@ -1,16 +1,9 @@
 package icu.suc.servergui
 
-import icu.suc.serverevents.ServerEvents.Connection.Receive
+import icu.suc.serverevents.ServerEvents
 import net.minecraft.core.NonNullList
-import net.minecraft.network.PacketListener
 import net.minecraft.network.chat.Component
-import net.minecraft.network.protocol.Packet
-import net.minecraft.network.protocol.game.ClientboundContainerClosePacket
-import net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket
-import net.minecraft.network.protocol.game.ClientboundOpenScreenPacket
-import net.minecraft.network.protocol.game.ClientboundSetPlayerInventoryPacket
-import net.minecraft.network.protocol.game.ServerboundContainerClickPacket
-import net.minecraft.network.protocol.game.ServerboundContainerClosePacket
+import net.minecraft.network.protocol.game.*
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.server.network.ServerGamePacketListenerImpl
@@ -29,27 +22,25 @@ open class ServerGui(private var type: (player: ServerPlayer) -> GuiType) {
     private var open: (player: ServerPlayer, context: Context) -> Unit = DEFAULT_OPEN
     private var close: (player: ServerPlayer, context: Context) -> Unit = DEFAULT_CLOSE
 
-    fun open(player: ServerPlayer): Int {
-        val container: Int = nextContainerCounter(player)
+    fun open(player: ServerPlayer) {
+        nextContainerCounter(player) {
+            val type = this.type.invoke(player)
+            val title = this.title.invoke(player)
+            val cursor = this.cursor.invoke(player)
+            val item = this.item.invoke(player)
+            val items = NonNullList.withSize(type.size(), item)
+            this.items.forEach { (slot: Int, function: (ServerPlayer) -> ItemStack) ->
+                if (slot in items.indices) items[slot] = function.invoke(player)
+            }
 
-        val type = this.type.invoke(player)
-        val title = this.title.invoke(player)
-        val cursor = this.cursor.invoke(player)
-        val item = this.item.invoke(player)
-        val items = NonNullList.withSize(type.size(), item)
-        this.items.forEach { (slot: Int, function: (ServerPlayer) -> ItemStack) ->
-            items[slot] = function.invoke(player)
+            val context = Context(it, type, title, cursor, item, items, click, clicks, open, close)
+            CONTEXTS[player.uuid] = context
+
+            player.connection.send(ClientboundOpenScreenPacket(it, type.menu(), title))
+            player.connection.send(ClientboundContainerSetContentPacket(it, 0, items, cursor))
+
+            open.invoke(player, context)
         }
-
-        val context = Context(container, type, title, cursor, item, items, click, clicks, open, close)
-        CONTEXTS[player.uuid] = context
-
-        player.connection.send(ClientboundOpenScreenPacket(container, type.menu(), title))
-        player.connection.send(ClientboundContainerSetContentPacket(container, 0, items, cursor))
-
-        open.invoke(player, context)
-
-        return container
     }
 
     fun setType(type: (ServerPlayer) -> GuiType): ServerGui {
@@ -107,93 +98,110 @@ open class ServerGui(private var type: (player: ServerPlayer) -> GuiType) {
         @JvmField val DEFAULT_OPEN: (player: ServerPlayer, context: Context) -> Unit = { _, _ -> }
         @JvmField val DEFAULT_CLOSE: (player: ServerPlayer, context: Context) -> Unit = { _, _ -> }
 
-        private val CONTEXTS: MutableMap<UUID, Context> = ConcurrentHashMap()
+        private val CONTEXTS = ConcurrentHashMap<UUID, Context>()
 
         fun close(player: ServerPlayer) {
-            val uuid = player.uuid
-            val context = CONTEXTS[uuid]!!
-            player.connection.send(ClientboundContainerClosePacket(context.container))
-            context.close(player, context)
-            CONTEXTS.remove(uuid)
+            CONTEXTS.remove(player.uuid)?.let { context ->
+                player.connection.send(ClientboundContainerClosePacket(context.container))
+                context.close(player, context)
+            }
         }
 
-        private fun nextContainerCounter(player: ServerPlayer): Int {
-            player.nextContainerCounter()
-            return player.containerCounter
+        private fun nextContainerCounter(player: ServerPlayer, callback: (Int) -> Unit) {
+            val server = player.server!!
+            if (server.isSameThread) {
+                player.nextContainerCounter()
+                callback(player.containerCounter)
+            } else server.execute {
+                player.nextContainerCounter()
+                callback(player.containerCounter)
+            }
         }
 
         init {
-            Receive.ALLOW.register(
-                PHASE,
-                Receive.Allow { listener: PacketListener?, packet: Packet<*>? ->
-                    if (listener is ServerGamePacketListenerImpl) {
-                        val player = listener.player
-                        val context: Context = CONTEXTS[player.uuid] ?: return@Allow true
+            ServerEvents.Connection.Receive.ALLOW.register(PHASE) {
+                listener, packet ->
+                run {
+                    if (listener !is ServerGamePacketListenerImpl) {
+                        return@register true
+                    }
 
-                        val container = context.container
+                    val player = listener.player
+                    val context: Context = CONTEXTS[player.uuid] ?: return@register true
 
-                        if (packet is ServerboundContainerClickPacket) {
+                    val container = context.container
+
+                    val server = player.server!!
+
+                    when (packet) {
+                        is ServerboundContainerClickPacket -> {
                             if (container != packet.containerId) {
-                                return@Allow true
+                                return@register true
                             }
 
-                            val size = context.type.size()
-                            val slot = packet.slotNum.toInt()
-                            val button = packet.buttonNum
-                            val type = ClickType.of(packet.clickType, button)
-                            val items = context.items
-
-                            if (type == ClickType.SWAP && Inventory.EQUIPMENT_SLOT_MAPPING.containsKey(button.toInt())) {
-                                player.connection.send(
-                                    ClientboundSetPlayerInventoryPacket(
-                                        button.toInt(),
-                                        player.inventory.getItem(button.toInt())
-                                    )
-                                )
-                            }
-                            else {
-                                for (entry in packet.changedSlots()) {
-                                    var i = entry.key
-                                    if (i >= size) {
-                                        i -= size
-                                        if (i < Inventory.INVENTORY_SIZE - Inventory.SELECTION_SIZE) {
-                                            i += Inventory.SELECTION_SIZE
-                                        } else {
-                                            i -= Inventory.INVENTORY_SIZE - Inventory.SELECTION_SIZE
-                                        }
-                                        player.connection.send(
-                                            ClientboundSetPlayerInventoryPacket(
-                                                i,
-                                                player.inventory.getItem(i)
-                                            )
+                            server.execute {
+                                val size = context.type.size()
+                                val slot = packet.slotNum.toInt()
+                                val button = packet.buttonNum.toInt()
+                                val type = ClickType.of(packet.clickType, button)
+                                val items = context.items
+                                if (type == ClickType.SWAP && Inventory.EQUIPMENT_SLOT_MAPPING.containsKey(button)) {
+                                    player.connection.send(
+                                        ClientboundSetPlayerInventoryPacket(
+                                            button,
+                                            player.inventory.getItem(button)
                                         )
+                                    )
+                                } else {
+                                    for (entry in packet.changedSlots()) {
+                                        var i = entry.key
+                                        if (i >= size) {
+                                            i -= size
+                                            if (i < Inventory.INVENTORY_SIZE - Inventory.SELECTION_SIZE) {
+                                                i += Inventory.SELECTION_SIZE
+                                            } else {
+                                                i -= Inventory.INVENTORY_SIZE - Inventory.SELECTION_SIZE
+                                            }
+                                            player.connection.send(
+                                                ClientboundSetPlayerInventoryPacket(
+                                                    i,
+                                                    player.inventory.getItem(i)
+                                                )
+                                            )
+                                        }
                                     }
                                 }
+                                if (type != null && slot in 0 until size) {
+                                    val click = context.clicks.getOrDefault(slot, context.click)
+                                    val result =
+                                        click.invoke(player, context, items[slot], slot, type, button)
+                                    items[slot] = result
+                                }
+                                player.connection.send(ClientboundContainerSetContentPacket(container, 0, items, context.cursor))
                             }
 
-                            if (type != null && slot < size) {
-                                val click = context.clicks.getOrDefault(slot, context.click)
-                                val result =
-                                    click.invoke(player, context, items[slot], slot, type, button.toInt())
-                                items[slot] = result
-                            }
-
-                            player.connection.send(ClientboundContainerSetContentPacket(container, 0, items, context.cursor))
-
-                            return@Allow false
+                            return@register false
                         }
-                        else if (packet is ServerboundContainerClosePacket) {
+                        is ServerboundContainerClosePacket -> {
                             if (container != packet.containerId) {
-                                return@Allow true
+                                return@register true
                             }
 
-                            context.close(player, context)
+                            server.execute { close(player) }
 
-                            return@Allow false
+                            return@register false
                         }
+                        else -> return@register true
                     }
-                    true
-                })
+                }
+            }
+            ServerEvents.Player.Leave.ALLOW_MESSAGE.register(PHASE) {
+                player, _ ->
+                run {
+                    CONTEXTS.remove(player.uuid)
+                    return@register true
+                }
+            }
         }
     }
 
